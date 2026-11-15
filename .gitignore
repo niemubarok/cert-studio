@@ -1,6 +1,4 @@
 .env
 .env.*
 !.env.example
-*.sqlite
-*.sqlite-wal
-*.sqlite-shm
+.vercel

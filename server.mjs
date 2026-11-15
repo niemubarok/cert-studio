@@ -1,7 +1,6 @@
 import { createReadStream, existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { basename, extname, join } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 
 const workspaceRoot = fileURLToPath(new URL('.', import.meta.url));
@@ -12,33 +11,25 @@ try {
 }
 
 const port = Number(process.env.PORT || 4173);
-const dbPath = join(workspaceRoot, 'drafts.sqlite');
-const db = new DatabaseSync(dbPath);
-db.exec(`
-  PRAGMA journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS drafts (
+const storageMode = process.env.STORAGE_MODE === 'local-sqlite' ? 'local-sqlite' : 'browser';
+const sqlitePath = process.env.SQLITE_DB_PATH || join(workspaceRoot, 'drafts.sqlite');
+let localDb = null;
+
+async function getLocalSqliteDb() {
+  if (localDb) return localDb;
+  const { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(sqlitePath);
+  db.exec(`CREATE TABLE IF NOT EXISTS drafts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     recipient_name TEXT NOT NULL,
     certificate_number TEXT NOT NULL,
     data_json TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
-  );
-`);
-
-const stmtListDrafts = db.prepare(
-  'SELECT id, recipient_name, certificate_number, updated_at FROM drafts ORDER BY updated_at DESC'
-);
-const stmtGetDraft = db.prepare(
-  'SELECT id, recipient_name, certificate_number, data_json, created_at, updated_at FROM drafts WHERE id = ?'
-);
-const stmtInsertDraft = db.prepare(
-  'INSERT INTO drafts (recipient_name, certificate_number, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
-);
-const stmtUpdateDraft = db.prepare(
-  'UPDATE drafts SET recipient_name = ?, certificate_number = ?, data_json = ?, updated_at = ? WHERE id = ?'
-);
-const stmtDeleteDraft = db.prepare('DELETE FROM drafts WHERE id = ?');
+  )`);
+  localDb = db;
+  return localDb;
+}
 const apiBase = 'https://me-qr.com/api/v2';
 const maxRequestBytes = 12 * 1024 * 1024;
 const localOrigins = new Set([
@@ -99,14 +90,15 @@ function apiResponseDetails(result) {
 }
 
 async function createFileQr(request, response) {
-  const token = process.env.ME_QR_API_TOKEN;
-  if (!token) {
-    sendJson(response, 503, { error: 'Atur ME_QR_API_TOKEN di environment server lokal terlebih dahulu.' });
-    return;
-  }
-
   try {
     const input = await readJson(request);
+    const clientToken = typeof input.apiKey === 'string' ? input.apiKey.trim() : '';
+    const token = clientToken || process.env.ME_QR_API_TOKEN;
+    if (!token) {
+      sendJson(response, 400, { error: 'Masukkan ME-QR API Key di UI atau atur ME_QR_API_TOKEN di environment server lokal.' });
+      return;
+    }
+
     const imageMatch = typeof input.file === 'string'
       ? input.file.match(/^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/)
       : null;
@@ -190,152 +182,137 @@ async function createFileQr(request, response) {
   }
 }
 
-function parseDraftPayload(input) {
-  const data = input && typeof input === 'object' ? input.data : null;
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    const error = new Error('Data draft tidak valid.');
-    error.status = 400;
-    throw error;
+function applyLocalCors(request, response, methods) {
+  const origin = request.headers.origin;
+  if (origin && localOrigins.has(origin)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Vary', 'Origin');
   }
-  const recipientName = String(data.in_recipient_name || '').trim() || 'Tanpa nama';
-  const certificateNumber = String(data.in_cert_no || '').trim();
-  return { recipientName, certificateNumber, dataJson: JSON.stringify(data) };
+
+  if (request.method === 'OPTIONS') {
+    if (!localOrigins.has(origin)) {
+      sendJson(response, 403, { error: 'Origin lokal tidak diizinkan.' });
+      return true;
+    }
+    response.writeHead(204, {
+      'Access-Control-Allow-Methods': methods,
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+    response.end();
+    return true;
+  }
+  return false;
 }
 
 async function handleDraftsApi(request, response, pathname) {
-  const match = pathname.match(/^\/api\/drafts(?:\/(\d+)(?:\/(duplicate))?)?$/);
-  if (!match) {
-    sendJson(response, 404, { error: 'Endpoint draft tidak ditemukan.' });
+  if (storageMode !== 'local-sqlite') {
+    sendJson(response, 404, { error: 'Penyimpanan SQLite lokal tidak aktif (STORAGE_MODE=browser).' });
     return;
   }
 
-  const draftId = match[1] ? Number(match[1]) : null;
-  const action = match[2] || null;
+  const db = await getLocalSqliteDb();
+  const idMatch = pathname.match(/^\/api\/drafts\/(\d+)$/);
 
-  try {
-    if (request.method === 'GET' && draftId === null) {
-      sendJson(response, 200, { drafts: stmtListDrafts.all() });
-      return;
-    }
-
-    if (request.method === 'GET' && draftId !== null && !action) {
-      const row = stmtGetDraft.get(draftId);
-      if (!row) {
-        sendJson(response, 404, { error: 'Draft tidak ditemukan.' });
-        return;
-      }
-      sendJson(response, 200, {
-        draft: {
-          id: row.id,
-          recipient_name: row.recipient_name,
-          certificate_number: row.certificate_number,
-          data: JSON.parse(row.data_json),
-          created_at: row.created_at,
-          updated_at: row.updated_at
-        }
-      });
-      return;
-    }
-
-    if (request.method === 'POST' && draftId === null) {
-      const input = await readJson(request);
-      const { recipientName, certificateNumber, dataJson } = parseDraftPayload(input);
-      const now = new Date().toISOString();
-      const result = stmtInsertDraft.run(recipientName, certificateNumber, dataJson, now, now);
-      const id = Number(result.lastInsertRowid);
-      sendJson(response, 201, {
-        draft: { id, recipient_name: recipientName, certificate_number: certificateNumber, updated_at: now }
-      });
-      return;
-    }
-
-    if (request.method === 'POST' && draftId !== null && action === 'duplicate') {
-      const existing = stmtGetDraft.get(draftId);
-      if (!existing) {
-        sendJson(response, 404, { error: 'Draft yang akan diduplikat tidak ditemukan.' });
-        return;
-      }
-      const now = new Date().toISOString();
-      const result = stmtInsertDraft.run(
-        existing.recipient_name,
-        existing.certificate_number,
-        existing.data_json,
-        now,
-        now
-      );
-      const id = Number(result.lastInsertRowid);
-      sendJson(response, 201, {
-        draft: {
-          id,
-          recipient_name: existing.recipient_name,
-          certificate_number: existing.certificate_number,
-          data: JSON.parse(existing.data_json),
-          updated_at: now
-        }
-      });
-      return;
-    }
-
-    if (request.method === 'PUT' && draftId !== null && !action) {
-      const input = await readJson(request);
-      const { recipientName, certificateNumber, dataJson } = parseDraftPayload(input);
-      const now = new Date().toISOString();
-      const result = stmtUpdateDraft.run(recipientName, certificateNumber, dataJson, now, draftId);
-      if (result.changes === 0) {
-        sendJson(response, 404, { error: 'Draft tidak ditemukan.' });
-        return;
-      }
-      sendJson(response, 200, {
-        draft: { id: draftId, recipient_name: recipientName, certificate_number: certificateNumber, updated_at: now }
-      });
-      return;
-    }
-
-    if (request.method === 'DELETE' && draftId !== null && !action) {
-      const result = stmtDeleteDraft.run(draftId);
-      if (result.changes === 0) {
-        sendJson(response, 404, { error: 'Draft tidak ditemukan.' });
-        return;
-      }
-      sendJson(response, 200, { deleted: true, id: draftId });
-      return;
-    }
-
-    sendJson(response, 405, { error: 'Metode HTTP tidak didukung untuk endpoint ini.' });
-  } catch (error) {
-    sendJson(response, error.status || 500, { error: error.message || 'Kesalahan server SQLite.' });
+  if (pathname === '/api/drafts' && request.method === 'GET') {
+    const drafts = db.prepare(
+      'SELECT id, recipient_name, certificate_number, updated_at FROM drafts ORDER BY updated_at DESC'
+    ).all();
+    sendJson(response, 200, { drafts });
+    return;
   }
+
+  if (pathname === '/api/drafts' && request.method === 'POST') {
+    const body = await readJson(request);
+    const data = body.data && typeof body.data === 'object' ? body.data : body;
+    const now = new Date().toISOString();
+    const recipientName = String(data.in_recipient_name || '').trim() || 'Tanpa nama';
+    const certificateNumber = String(data.in_cert_no || '').trim();
+    const result = db.prepare(
+      'INSERT INTO drafts (recipient_name, certificate_number, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(recipientName, certificateNumber, JSON.stringify(data), now, now);
+    sendJson(response, 201, {
+      draft: {
+        id: Number(result.lastInsertRowid),
+        recipient_name: recipientName,
+        certificate_number: certificateNumber,
+        created_at: now,
+        updated_at: now
+      }
+    });
+    return;
+  }
+
+  if (idMatch && request.method === 'GET') {
+    const draft = db.prepare(
+      'SELECT id, recipient_name, certificate_number, data_json, created_at, updated_at FROM drafts WHERE id = ?'
+    ).get(Number(idMatch[1]));
+    if (!draft) {
+      sendJson(response, 404, { error: 'Draft tidak ditemukan.' });
+      return;
+    }
+    sendJson(response, 200, { draft });
+    return;
+  }
+
+  if (idMatch && request.method === 'PUT') {
+    const body = await readJson(request);
+    const data = body.data && typeof body.data === 'object' ? body.data : body;
+    const now = new Date().toISOString();
+    const recipientName = String(data.in_recipient_name || '').trim() || 'Tanpa nama';
+    const certificateNumber = String(data.in_cert_no || '').trim();
+    const result = db.prepare(
+      'UPDATE drafts SET recipient_name = ?, certificate_number = ?, data_json = ?, updated_at = ? WHERE id = ?'
+    ).run(recipientName, certificateNumber, JSON.stringify(data), now, Number(idMatch[1]));
+    if (result.changes === 0) {
+      sendJson(response, 404, { error: 'Draft tidak ditemukan.' });
+      return;
+    }
+    sendJson(response, 200, {
+      draft: {
+        id: Number(idMatch[1]),
+        recipient_name: recipientName,
+        certificate_number: certificateNumber,
+        updated_at: now
+      }
+    });
+    return;
+  }
+
+  if (idMatch && request.method === 'DELETE') {
+    db.prepare('DELETE FROM drafts WHERE id = ?').run(Number(idMatch[1]));
+    sendJson(response, 200, { deleted: true });
+    return;
+  }
+
+  sendJson(response, 405, { error: 'Metode tidak diizinkan.' });
 }
 
 const server = createServer(async (request, response) => {
   const requestUrl = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
-  if (requestUrl.pathname.startsWith('/api/')) {
-    const origin = request.headers.origin;
-    if (origin && localOrigins.has(origin)) {
-      response.setHeader('Access-Control-Allow-Origin', origin);
-      response.setHeader('Vary', 'Origin');
-    }
 
-    if (request.method === 'OPTIONS') {
-      if (origin && !localOrigins.has(origin)) {
-        sendJson(response, 403, { error: 'Origin lokal tidak diizinkan.' });
-        return;
-      }
-      response.writeHead(204, {
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      });
-      response.end();
+  if (requestUrl.pathname === '/api/config') {
+    if (applyLocalCors(request, response, 'GET, OPTIONS')) return;
+    if (request.method === 'GET') {
+      sendJson(response, 200, { storageMode });
       return;
     }
+  }
 
-    if (requestUrl.pathname === '/api/qr/file' && request.method === 'POST') {
-      await createFileQr(request, response);
-      return;
-    }
-
-    if (requestUrl.pathname === '/api/drafts' || requestUrl.pathname.startsWith('/api/drafts/')) {
+  if (requestUrl.pathname === '/api/drafts' || requestUrl.pathname.startsWith('/api/drafts/')) {
+    if (applyLocalCors(request, response, 'GET, POST, PUT, DELETE, OPTIONS')) return;
+    try {
       await handleDraftsApi(request, response, requestUrl.pathname);
+    } catch (error) {
+      sendJson(response, error.status || 500, { error: error.message || 'Kesalahan server SQLite lokal.' });
+    }
+    return;
+  }
+
+  if (requestUrl.pathname === '/api/qr/file') {
+    if (applyLocalCors(request, response, 'POST, OPTIONS')) return;
+
+    if (request.method === 'POST') {
+      await createFileQr(request, response);
       return;
     }
   }

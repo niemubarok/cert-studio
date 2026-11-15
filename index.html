@@ -994,6 +994,35 @@
     }
     .qr-upload:hover { background: #e2f3ef; border-color: #a9d8d1; }
 
+    .input-action-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-action-wrap input {
+      padding-right: 40px;
+    }
+    .input-action-btn {
+      position: absolute;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .15s ease, color .15s ease;
+    }
+    .input-action-btn:hover {
+      background: rgba(15, 118, 110, .09);
+      color: var(--teal-dark);
+    }
+    .input-action-btn svg { width: 15px; height: 15px; }
+
     .status-line {
       display: flex;
       align-items: flex-start;
@@ -1536,36 +1565,88 @@
 
     @media (max-width: 1023px) {
       .workspace { display: block; }
-      .mobile-switch { display: flex; }
-      .editor-panel { height: 100%; border-right: 0; }
+      .mobile-switch {
+        display: inline-flex;
+        position: fixed;
+        left: 50%;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        z-index: 35;
+        gap: 4px;
+        padding: 5px;
+        border: 1px solid rgba(18, 43, 38, .14);
+        border-radius: 999px;
+        background: rgba(255, 253, 248, .92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 10px 28px -8px rgba(11, 42, 37, .32), 0 2px 6px rgba(11, 42, 37, .08);
+      }
+      .mobile-switch button {
+        flex: 0 0 auto;
+        min-width: 112px;
+        padding: 9px 16px;
+        border-radius: 999px;
+      }
+      .mobile-switch button.is-active {
+        color: #fff;
+        background: linear-gradient(180deg, #11988c, #0f766e);
+        border-color: transparent;
+        box-shadow: 0 4px 12px -4px rgba(15, 118, 110, .65);
+      }
+      .editor-panel {
+        height: 100%;
+        border-right: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: calc(68px + env(safe-area-inset-bottom));
+      }
       .preview-area { display: none; height: 100%; }
       body.show-preview .editor-panel { display: none; }
       body.show-preview .preview-area { display: flex; }
-      .panel-intro { padding: 18px 18px 14px; }
-      .panel-scroll { padding: 4px 18px 22px; }
-      .panel-foot { padding: 12px 18px 14px; }
-      .preview-canvas { padding: 20px; }
+      .panel-intro { padding: 14px 18px 12px; }
+      .panel-intro h1 { font-size: 21px; margin: 4px 0 3px; }
+      .panel-lead { font-size: 10.5px; line-height: 1.45; }
+      .panel-scroll {
+        flex: 0 0 auto;
+        overflow: visible;
+        padding: 4px 18px 18px;
+      }
+      .panel-foot {
+        padding: 14px 18px 18px;
+        box-shadow: none;
+      }
+      .preview-canvas { padding: 16px 16px calc(76px + env(safe-area-inset-bottom)); }
       .dash-stats { grid-template-columns: 1fr 1fr; }
       .search-box { grid-column: 1 / -1; }
+      body:not(.dashboard-active) .toast-host { bottom: calc(68px + env(safe-area-inset-bottom)); }
     }
 
     @media (max-width: 640px) {
-      .appbar { gap: 12px; padding: 0 12px; height: 62px; }
-      .brand-mark { width: 34px; height: 34px; }
-      .brand-title { font-size: 18px; }
+      .appbar { gap: 8px; padding: 0 12px; height: 52px; }
+      .brand-mark { width: 32px; height: 32px; border-radius: 9px; }
+      .brand-mark svg { width: 18px; height: 18px; }
+      .brand-title { font-size: 17px; }
       .brand-sub { display: none; }
+      .appbar-actions { gap: 6px; }
       .appbar-actions .btn-label { display: none; }
-      .appbar-actions .btn { padding: 9px 10px; }
+      .appbar-actions .btn { padding: 8px 9px; border-radius: 9px; }
       .appbar-actions .btn svg { width: 16px; height: 16px; }
-      .preview-toolbar { padding: 9px 12px; gap: 10px; }
+      .panel-intro { padding: 12px 14px 10px; }
+      .panel-intro h1 { font-size: 19px; }
+      .panel-lead { display: none; }
+      .panel-scroll { padding: 2px 14px 16px; }
+      .panel-foot { padding: 12px 14px 16px; }
+      .form-section { padding: 14px 0 16px; }
+      .preview-toolbar { padding: 7px 10px; gap: 8px; }
+      .tabs { padding: 2px; border-radius: 9px; }
+      .tab { padding: 6px 10px; font-size: 11px; border-radius: 7px; }
       .zoom-group .zoom-label { display: none; }
-      .tab { padding: 7px 10px; }
       .tab-tag { display: none; }
-      .preview-canvas { padding: 14px; }
-      .panel-intro h1 { font-size: 22px; }
+      .preview-canvas { padding: 12px 12px calc(74px + env(safe-area-inset-bottom)); }
       .dashboard-header h1 { font-size: 32px; }
       .dash-stats { grid-template-columns: 1fr; }
       .toast-host { left: 12px; right: 12px; bottom: 12px; align-items: stretch; }
+      body:not(.dashboard-active) .toast-host { bottom: calc(68px + env(safe-area-inset-bottom)); }
       .toast { max-width: none; }
     }
 
@@ -1853,6 +1934,19 @@
               <p>Tautan verifikasi atau lampiran digital.</p>
             </div>
           </header>
+          <div class="field">
+            <label for="in_meqr_api_key">ME-QR API Key</label>
+            <div class="input-action-wrap">
+              <input type="password" id="in_meqr_api_key" autocomplete="off" placeholder="Opsional jika sudah diatur di server (.env)">
+              <button type="button" id="toggleMeQrKeyButton" class="input-action-btn" onclick="toggleMeQrKeyVisibility()" aria-label="Tampilkan atau sembunyikan API Key" title="Tampilkan / sembunyikan">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z"/>
+                  <circle cx="12" cy="12" r="2.8" stroke-width="1.8"/>
+                </svg>
+              </button>
+            </div>
+            <p class="field-hint">Tersimpan di browser ini. Kosongkan untuk memakai token dari environment server.</p>
+          </div>
           <div class="field">
             <label for="in_qr_data">URL / Teks QR Verifikasi</label>
             <input type="text" id="in_qr_data" value="https://kemkes.go.id/verifikasi/KT.03.02/F/7413026/SER/2026" placeholder="https://tautan-verifikasi atau unggah lampiran">
@@ -2233,13 +2327,14 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 3.5 5 6.4v5.2c0 4.2 2.9 7.6 7 9.1 4.1-1.5 7-4.9 7-9.1V6.4L12 3.5Z"/>
         </svg>
-        Draft tersimpan di database SQLite lokal (drafts.sqlite) melalui server lokal.
+        Data tidak dikirim ke server mana pun — tersimpan di IndexedDB perangkat ini.
       </p>
     </div>
   </section>
 
   <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="false"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
@@ -2248,11 +2343,27 @@
       'in_course_name', 'in_organizer', 'in_date', 'in_place_date', 'in_role', 'in_jpl',
       'in_signer_title_1', 'in_signer_title_2', 'in_signer_name', 'in_qr_data'
     ];
-    let cachedDrafts = [];
-    let draftDbReady = false;
+    let draftDb = null;
+    let draftStorage = null;
+    let draftStorageMode = 'browser';
+    let localSqliteDrafts = [];
     let currentDraftId = null;
     let draftDirty = false;
-    const apiBaseUrl = window.location.port === '4173' ? '' : 'http://127.0.0.1:4173';
+
+    function getApiUrl(path) {
+      const isLocalLiveServer = window.location.protocol === 'file:' || window.location.port === '5500';
+      return isLocalLiveServer ? `http://127.0.0.1:4173${path}` : path;
+    }
+
+    async function fetchLocalJson(path, options = {}) {
+      const response = await fetch(getApiUrl(path), options);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || `Permintaan gagal (HTTP ${response.status}).`);
+      }
+      return data;
+    }
+
     const databaseReady = initializeDraftDatabase();
 
     const CERT_TEMPLATE_IDS = ['kemenkes', 'klasik'];
@@ -2355,37 +2466,79 @@
       if (!options.silent) draftDirty = true;
     }
 
-    async function requestDraftApi(path, options = {}) {
-      const response = await fetch(`${apiBaseUrl}${path}`, {
-        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-        ...options
+    function openDraftStorage() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('sertifikat-draft-storage', 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('database');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(result.error || `Permintaan gagal (HTTP ${response.status}).`);
-      }
-      return result;
     }
 
-    async function refreshDraftList() {
-      const result = await requestDraftApi('/api/drafts');
-      cachedDrafts = Array.isArray(result.drafts) ? result.drafts : [];
-      renderDraftList();
+    function readStoredDatabase() {
+      return new Promise((resolve, reject) => {
+        const transaction = draftStorage.transaction('database', 'readonly');
+        const request = transaction.objectStore('database').get('sqlite');
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function persistDatabase() {
+      return new Promise((resolve, reject) => {
+        const transaction = draftStorage.transaction('database', 'readwrite');
+        transaction.objectStore('database').put(draftDb.export(), 'sqlite');
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error);
+      });
+    }
+
+    async function refreshLocalDrafts() {
+      const result = await fetchLocalJson('/api/drafts');
+      localSqliteDrafts = Array.isArray(result.drafts) ? result.drafts : [];
     }
 
     async function initializeDraftDatabase() {
       try {
-        await refreshDraftList();
-        draftDbReady = true;
+        try {
+          const config = await fetchLocalJson('/api/config');
+          if (config.storageMode === 'local-sqlite') {
+            draftStorageMode = 'local-sqlite';
+            await refreshLocalDrafts();
+            renderDraftList();
+            document.getElementById('saveDraftButton').disabled = false;
+            setDraftStatus('SQLite lokal aktif. Draft tersimpan di drafts.sqlite.');
+            return true;
+          }
+        } catch {
+          // Fallback ke penyimpanan browser (sql.js + IndexedDB)
+        }
+
+        const SQL = await initSqlJs({
+          locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/${filename}`
+        });
+        draftStorage = await openDraftStorage();
+        const storedDatabase = await readStoredDatabase();
+        draftDb = storedDatabase ? new SQL.Database(storedDatabase) : new SQL.Database();
+        draftDb.run(`CREATE TABLE IF NOT EXISTS drafts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          recipient_name TEXT NOT NULL,
+          certificate_number TEXT NOT NULL,
+          data_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )`);
+        await persistDatabase();
+        renderDraftList();
         document.getElementById('saveDraftButton').disabled = false;
-        setDraftStatus('SQLite lokal siap (drafts.sqlite).');
+        setDraftStatus('SQLite siap. Draft tersimpan di browser ini.');
         return true;
       } catch (error) {
-        console.error('Gagal terhubung ke SQLite lokal:', error);
-        draftDbReady = false;
+        console.error('Gagal menginisialisasi SQLite:', error);
         const button = document.getElementById('saveDraftButton');
         button.disabled = true;
-        setDraftStatus('Server SQLite lokal tidak terjangkau. Jalankan node server.mjs.', true);
+        setDraftStatus('SQLite tidak tersedia. Periksa koneksi internet atau dukungan penyimpanan browser.', true);
         return false;
       }
     }
@@ -2476,10 +2629,14 @@
       };
     }
 
+    function isDraftBackendReady() {
+      return draftStorageMode === 'local-sqlite' || Boolean(draftDb);
+    }
+
     async function saveDraft(options = {}) {
       const silent = Boolean(options && options.silent);
-      if (!await databaseReady || !draftDbReady) {
-        setDraftStatus('SQLite lokal belum siap. Draft belum disimpan.', true);
+      if (!await databaseReady || !isDraftBackendReady()) {
+        setDraftStatus('SQLite belum siap. Draft belum disimpan.', true);
         return;
       }
 
@@ -2487,23 +2644,44 @@
       button.disabled = true;
       try {
         const data = getDraftFormData();
-        let saved;
-        if (currentDraftId === null) {
-          saved = await requestDraftApi('/api/drafts', {
-            method: 'POST',
-            body: JSON.stringify({ data })
-          });
-          currentDraftId = Number(saved.draft.id);
+        let now = new Date().toISOString();
+        if (draftStorageMode === 'local-sqlite') {
+          if (currentDraftId === null) {
+            const created = await fetchLocalJson('/api/drafts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ data })
+            });
+            currentDraftId = Number(created.draft.id);
+            now = created.draft.updated_at || now;
+          } else {
+            const updated = await fetchLocalJson(`/api/drafts/${Number(currentDraftId)}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ data })
+            });
+            now = updated.draft.updated_at || now;
+          }
+          await refreshLocalDrafts();
         } else {
-          saved = await requestDraftApi(`/api/drafts/${currentDraftId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ data })
-          });
+          if (currentDraftId === null) {
+            draftDb.run(
+              'INSERT INTO drafts (recipient_name, certificate_number, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+              [data.in_recipient_name.trim() || 'Tanpa nama', data.in_cert_no.trim(), JSON.stringify(data), now, now]
+            );
+            currentDraftId = draftDb.exec('SELECT last_insert_rowid()')[0].values[0][0];
+          } else {
+            draftDb.run(
+              'UPDATE drafts SET recipient_name = ?, certificate_number = ?, data_json = ?, updated_at = ? WHERE id = ?',
+              [data.in_recipient_name.trim() || 'Tanpa nama', data.in_cert_no.trim(), JSON.stringify(data), now, currentDraftId]
+            );
+          }
+          await persistDatabase();
         }
-        await refreshDraftList();
+        renderDraftList();
         draftDirty = false;
         syncDraftChip('saved');
-        setDraftStatus(`Draft tersimpan ${new Date(saved.draft.updated_at).toLocaleString('id-ID')}.`);
+        setDraftStatus(`Draft tersimpan ${new Date(now).toLocaleString('id-ID')}.`);
         if (!silent) showToast('Draft berhasil disimpan.');
       } catch (error) {
         console.error('Gagal menyimpan draft:', error);
@@ -2534,12 +2712,18 @@
 
     function renderDraftList() {
       const list = document.getElementById('draftList');
-      if (!list) return;
+      if (!list || !isDraftBackendReady()) return;
 
       const search = (document.getElementById('draftSearch')?.value || '').trim().toLowerCase();
-      const allRows = cachedDrafts;
+      let allRows = [];
+      if (draftStorageMode === 'local-sqlite') {
+        allRows = localSqliteDrafts.map(d => [d.id, d.recipient_name, d.certificate_number, d.updated_at]);
+      } else {
+        const result = draftDb.exec('SELECT id, recipient_name, certificate_number, updated_at FROM drafts ORDER BY updated_at DESC');
+        allRows = result.length ? result[0].values : [];
+      }
       const rows = search
-        ? allRows.filter(row => `${row.recipient_name || ''} ${row.certificate_number || ''}`.toLowerCase().includes(search))
+        ? allRows.filter(([, name, certificateNumber]) => `${name || ''} ${certificateNumber || ''}`.toLowerCase().includes(search))
         : allRows;
 
       list.replaceChildren();
@@ -2552,7 +2736,7 @@
         ? `Tidak ada draft dengan kata kunci “${search}”. Coba nama peserta atau nomor sertifikat lain.`
         : 'Mulai dengan menekan “Draft Baru”, isi data sertifikat, lalu simpan agar muncul di arsip ini.';
 
-      rows.forEach(({ id, recipient_name: name, certificate_number: certificateNumber, updated_at: updatedAt }, index) => {
+      rows.forEach(([id, name, certificateNumber, updatedAt], index) => {
         const card = document.createElement('article');
         card.className = 'draft-card';
         card.style.animationDelay = `${Math.min(index * 35, 280)}ms`;
@@ -2613,65 +2797,83 @@
       });
     }
 
-    async function editDraft(draftId) {
-      if (!await databaseReady || !draftDbReady) return;
-      try {
-        const result = await requestDraftApi(`/api/drafts/${Number(draftId)}`);
-        const data = result.draft?.data;
-        if (!data) return;
-
-        currentDraftId = Number(draftId);
-        setTemplate(data.template || DEFAULT_CERT_TEMPLATE, { silent: true });
-        draftFieldIds.forEach(id => {
-          const input = document.getElementById(id);
-          input.value = data[id] ?? '';
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-        showEditor();
-        draftDirty = false;
-        syncDraftChip('saved');
-        setDraftStatus(`Mengedit draft: ${data.in_recipient_name || 'Tanpa nama'}`);
-      } catch (error) {
-        console.error('Gagal memuat draft:', error);
-        showToast(error.message || 'Gagal memuat draft.', 'error');
+    async function getDraftDataById(draftId) {
+      if (draftStorageMode === 'local-sqlite') {
+        const res = await fetchLocalJson(`/api/drafts/${Number(draftId)}`);
+        return res.draft ? JSON.parse(res.draft.data_json) : null;
       }
+      const result = draftDb.exec(`SELECT data_json FROM drafts WHERE id = ${Number(draftId)}`);
+      if (!result.length || !result[0].values.length) return null;
+      return JSON.parse(result[0].values[0][0]);
+    }
+
+    async function editDraft(draftId) {
+      if (!await databaseReady || !isDraftBackendReady()) return;
+      const data = await getDraftDataById(draftId);
+      if (!data) return;
+
+      currentDraftId = Number(draftId);
+      setTemplate(data.template || DEFAULT_CERT_TEMPLATE, { silent: true });
+      draftFieldIds.forEach(id => {
+        const input = document.getElementById(id);
+        input.value = data[id] ?? '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      showEditor();
+      draftDirty = false;
+      syncDraftChip('saved');
+      setDraftStatus(`Mengedit draft: ${data.in_recipient_name || 'Tanpa nama'}`);
     }
 
     async function duplicateDraft(draftId) {
-      if (!await databaseReady || !draftDbReady) return;
-      try {
-        const result = await requestDraftApi(`/api/drafts/${Number(draftId)}/duplicate`, {
-          method: 'POST'
+      if (!await databaseReady || !isDraftBackendReady()) return;
+      const data = await getDraftDataById(draftId);
+      if (!data) return;
+
+      let newId;
+      if (draftStorageMode === 'local-sqlite') {
+        const created = await fetchLocalJson('/api/drafts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data })
         });
-        const newId = Number(result.draft.id);
-        await refreshDraftList();
-        await editDraft(newId);
-        setDraftStatus('Salinan draft dibuat. Ubah nama, NIK, dan nomor sertifikat lalu simpan.');
-        showToast('Draft diduplikat. Tinggal ganti nama dan data lainnya.', 'info');
-      } catch (error) {
-        console.error('Gagal menduplikat draft:', error);
-        showToast(error.message || 'Gagal menduplikat draft.', 'error');
+        newId = Number(created.draft.id);
+        await refreshLocalDrafts();
+      } else {
+        const now = new Date().toISOString();
+        draftDb.run(
+          'INSERT INTO drafts (recipient_name, certificate_number, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+          [String(data.in_recipient_name || '').trim() || 'Tanpa nama', String(data.in_cert_no || '').trim(), JSON.stringify(data), now, now]
+        );
+        newId = Number(draftDb.exec('SELECT last_insert_rowid()')[0].values[0][0]);
+        await persistDatabase();
       }
+      renderDraftList();
+      await editDraft(newId);
+      setDraftStatus('Salinan draft dibuat. Ubah nama, NIK, dan nomor sertifikat lalu simpan.');
+      showToast('Draft diduplikat. Tinggal ganti nama dan data lainnya.', 'info');
     }
 
     async function deleteDraft(draftId) {
-      if (!await databaseReady || !draftDbReady || !confirm('Hapus draft ini? Tindakan ini tidak dapat dibatalkan.')) return;
-      try {
-        await requestDraftApi(`/api/drafts/${Number(draftId)}`, { method: 'DELETE' });
-        if (currentDraftId === Number(draftId)) currentDraftId = null;
-        await refreshDraftList();
-        refreshDraftChip();
-        showToast('Draft dihapus dari arsip.', 'info');
-      } catch (error) {
-        console.error('Gagal menghapus draft:', error);
-        showToast(error.message || 'Gagal menghapus draft.', 'error');
+      if (!await databaseReady || !isDraftBackendReady() || !confirm('Hapus draft ini? Tindakan ini tidak dapat dibatalkan.')) return;
+      if (draftStorageMode === 'local-sqlite') {
+        await fetchLocalJson(`/api/drafts/${Number(draftId)}`, { method: 'DELETE' });
+        await refreshLocalDrafts();
+      } else {
+        draftDb.run('DELETE FROM drafts WHERE id = ?', [Number(draftId)]);
+        await persistDatabase();
       }
+      if (currentDraftId === Number(draftId)) currentDraftId = null;
+      renderDraftList();
+      refreshDraftChip();
+      showToast('Draft dihapus dari arsip.', 'info');
     }
 
     async function showDashboard() {
-      if (!await databaseReady || !draftDbReady) return;
+      if (!await databaseReady) return;
       if (currentDraftId !== null) await saveDraft({ silent: true });
-      await refreshDraftList();
+      if (draftStorageMode === 'local-sqlite') await refreshLocalDrafts();
+      renderDraftList();
       document.body.classList.remove('show-preview');
       document.body.classList.add('dashboard-active');
       const navLabel = document.getElementById('archiveNavLabel');
@@ -2775,15 +2977,14 @@
 
       try {
         const canvas = await createCurriculumCanvas();
-        const apiEndpoint = window.location.port === '4173'
-          ? '/api/qr/file'
-          : 'http://127.0.0.1:4173/api/qr/file';
-        const response = await fetch(apiEndpoint, {
+        const apiKey = document.getElementById('in_meqr_api_key')?.value.trim() || '';
+        const response = await fetch(getApiUrl('/api/qr/file'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fileName: getCurriculumFilename(),
-            file: canvas.toDataURL('image/png')
+            file: canvas.toDataURL('image/png'),
+            ...(apiKey ? { apiKey } : {})
           })
         });
         const result = await response.json();
@@ -2807,6 +3008,35 @@
         button.disabled = false;
         setBusy(false);
       }
+    }
+
+    // Penyimpanan lokal ME-QR API Key di browser
+    const MEQR_API_KEY_STORAGE = 'meqr_api_key';
+    const meQrKeyInput = document.getElementById('in_meqr_api_key');
+    if (meQrKeyInput) {
+      try {
+        meQrKeyInput.value = localStorage.getItem(MEQR_API_KEY_STORAGE) || '';
+      } catch {
+        // Abaikan jika localStorage tidak tersedia
+      }
+      meQrKeyInput.addEventListener('input', () => {
+        const value = meQrKeyInput.value.trim();
+        try {
+          if (value) {
+            localStorage.setItem(MEQR_API_KEY_STORAGE, value);
+          } else {
+            localStorage.removeItem(MEQR_API_KEY_STORAGE);
+          }
+        } catch {
+          // Abaikan jika localStorage tidak tersedia
+        }
+      });
+    }
+
+    function toggleMeQrKeyVisibility() {
+      const input = document.getElementById('in_meqr_api_key');
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
     }
 
     // Penanganan pembaruan QR Code dinamis untuk URL yang diedit manual

@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+!.env.example
+.opencode
+*.bak
+*.pdf
+_verify.png
+drafts.sqlite
+drafts.sqlite-shm
+drafts.sqlite-wal
+reference-image-btcls.png
+reference-template.jpg
+server.mjs
+temp_script.js
