@@ -1751,11 +1751,18 @@
         </svg>
         <span class="btn-label">Simpan</span>
       </button>
-      <button type="button" class="btn btn-paper" onclick="downloadCertificatePdf()" title="Unduh sertifikat PDF otomatis (Ctrl/Cmd + P)">
+      <button type="button" class="btn btn-paper" onclick="downloadCertificatePdf()" title="Unduh sertifikat PDF otomatis">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.5V15m0 0-4-4m4 4 4-4M5 19.5h14"/>
         </svg>
         <span class="btn-label">Unduh PDF</span>
+      </button>
+      <button type="button" class="btn btn-ghost-light" onclick="window.print()" title="Cetak / simpan PDF (Ctrl/Cmd + P)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 9V4.5h10V9M7 17.5H5.5A1.5 1.5 0 0 1 4 16v-4.5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5V16a1.5 1.5 0 0 1-1.5 1.5H17"/>
+          <rect x="7" y="14" width="10" height="5.5" rx="0.5" stroke-width="1.8"/>
+        </svg>
+        <span class="btn-label">Cetak</span>
       </button>
     </div>
   </header>
@@ -1982,14 +1989,21 @@
           </button>
         </div>
         <div class="foot-grid">
+          <button type="button" onclick="window.print()" class="btn btn-outline btn-block">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 9V4.5h10V9M7 17.5H5.5A1.5 1.5 0 0 1 4 16v-4.5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5V16a1.5 1.5 0 0 1-1.5 1.5H17"/>
+              <rect x="7" y="14" width="10" height="5.5" rx="0.5" stroke-width="1.8"/>
+            </svg>
+            Cetak
+          </button>
           <button type="button" onclick="downloadCurriculumImage()" class="btn btn-outline btn-block">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.5V16M7.5 11.5 12 16l4.5-4.5M5 19.5h14"/>
             </svg>
             Unduh Lampiran
           </button>
-          <button type="button" onclick="resetToDefault()" class="btn btn-ghost btn-block">Kosongkan Data</button>
         </div>
+        <button type="button" onclick="resetToDefault()" class="btn btn-ghost btn-block">Kosongkan Data</button>
       </div>
     </aside>
 
@@ -2337,6 +2351,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
   <script>
     const draftFieldIds = [
@@ -2428,7 +2443,7 @@
       }
       if (immediateQr && defaults.in_qr_data) {
         clearTimeout(qrTimer);
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=${encodeURIComponent(defaults.in_qr_data)}`;
+        setQrCodeValue(defaults.in_qr_data);
       }
     }
 
@@ -2998,6 +3013,7 @@
       document.body.classList.add('is-exporting', 'is-capturing-cert');
 
       try {
+        await ensureQrImageReadyForExport();
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
         const sheets = Array.from(document.querySelectorAll('#certStage .certificate-sheet'))
@@ -3017,14 +3033,28 @@
         const pageHeight = pdf.internal.pageSize.getHeight();
 
         for (let i = 0; i < sheets.length; i += 1) {
-          const canvas = await html2canvas(sheets[i], {
+          const sheet = sheets[i];
+          const renderedCanvas = await html2canvas(sheet, {
             backgroundColor: '#ffffff',
             scale: 2,
             useCORS: true,
             width: 1080,
             height: 764,
-            windowWidth: 1440
+            windowWidth: 1440,
+            onclone: (clonedDoc) => {
+              const headingTitle = clonedDoc.querySelector('.certificate-heading h1');
+              if (headingTitle) {
+                headingTitle.style.paddingBottom = '10px';
+                headingTitle.style.lineHeight = '1.25';
+              }
+            }
           });
+          const canvas = document.createElement('canvas');
+          canvas.width = renderedCanvas.width;
+          canvas.height = renderedCanvas.height;
+          const outCtx = canvas.getContext('2d');
+          outCtx.drawImage(renderedCanvas, 0, 0);
+          drawQrOntoExportCanvas(sheet, canvas);
           if (i > 0) pdf.addPage('a4', 'landscape');
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
           pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
@@ -3119,6 +3149,116 @@
     const EMPTY_QR_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     const qrInput = document.getElementById('in_qr_data');
     const qrImg = document.getElementById('out_qr_img');
+
+    function buildQrCanvas(text) {
+      if (typeof qrcode !== 'function') return null;
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      const count = qr.getModuleCount();
+      const margin = 2;
+      const targetSize = 230;
+      const cell = Math.max(2, Math.floor(targetSize / (count + margin * 2)));
+      const size = (count + margin * 2) * cell;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#000000';
+      for (let r = 0; r < count; r += 1) {
+        for (let c = 0; c < count; c += 1) {
+          if (qr.isDark(r, c)) {
+            ctx.fillRect((c + margin) * cell, (r + margin) * cell, cell, cell);
+          }
+        }
+      }
+      return canvas;
+    }
+
+    function buildQrDataUrl(text) {
+      const canvas = buildQrCanvas(text);
+      if (!canvas) {
+        return `https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=${encodeURIComponent(text)}`;
+      }
+      return canvas.toDataURL('image/png');
+    }
+
+    function drawQrOntoExportCanvas(sheet, exportCanvas) {
+      if (!sheet.contains(qrImg)) return;
+      const value = qrInput.value.trim();
+      if (!value) return;
+
+      const sheetRect = sheet.getBoundingClientRect();
+      const qrRect = qrImg.getBoundingClientRect();
+      if (!sheetRect.width || !sheetRect.height || !qrRect.width || !qrRect.height) return;
+
+      const scaleX = exportCanvas.width / sheetRect.width;
+      const scaleY = exportCanvas.height / sheetRect.height;
+      const x = (qrRect.left - sheetRect.left) * scaleX;
+      const y = (qrRect.top - sheetRect.top) * scaleY;
+      const w = qrRect.width * scaleX;
+      const h = qrRect.height * scaleY;
+
+      const ctx = exportCanvas.getContext('2d');
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1;
+      try {
+        const canDrawImg = qrImg.complete && qrImg.naturalWidth > 1 && /^data:/i.test(qrImg.src);
+        if (canDrawImg) {
+          ctx.drawImage(qrImg, x, y, w, h);
+          return;
+        }
+
+        const fallbackCanvas = buildQrCanvas(value);
+        if (fallbackCanvas) {
+          ctx.drawImage(fallbackCanvas, x, y, w, h);
+        }
+      } finally {
+        ctx.restore();
+      }
+    }
+
+    function setQrCodeValue(value) {
+      const trimmed = (value || '').trim();
+      qrImg.src = trimmed ? buildQrDataUrl(trimmed) : EMPTY_QR_SRC;
+    }
+
+    async function ensureQrImageReadyForExport() {
+      const value = qrInput.value.trim();
+      if (!value) return;
+
+      const currentSrc = qrImg.getAttribute('src') || '';
+      if (!currentSrc || currentSrc === EMPTY_QR_SRC) {
+        setQrCodeValue(value);
+      } else if (/^https?:\/\//i.test(currentSrc)) {
+        try {
+          const response = await fetch(currentSrc, { mode: 'cors' });
+          if (!response.ok) throw new Error('QR fetch failed');
+          const blob = await response.blob();
+          qrImg.src = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          setQrCodeValue(value);
+        }
+      }
+
+      if (!qrImg.complete) {
+        await new Promise(resolve => {
+          qrImg.addEventListener('load', resolve, { once: true });
+          qrImg.addEventListener('error', resolve, { once: true });
+        });
+      }
+      if (typeof qrImg.decode === 'function') {
+        await qrImg.decode().catch(() => {});
+      }
+    }
     
     let qrTimer = null;
     qrInput.addEventListener('input', () => {
@@ -3129,9 +3269,8 @@
         return;
       }
       qrTimer = setTimeout(() => {
-        const encoded = encodeURIComponent(value);
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=${encoded}`;
-      }, 400);
+        setQrCodeValue(value);
+      }, 250);
     });
 
     // Kembalikan formulir ke data contoh sesuai template aktif
@@ -3290,9 +3429,6 @@
       if (event.key.toLowerCase() === 's') {
         event.preventDefault();
         saveDraft();
-      } else if (event.key.toLowerCase() === 'p') {
-        event.preventDefault();
-        downloadCertificatePdf();
       } else if (event.key.toLowerCase() === 'd' && event.shiftKey) {
         event.preventDefault();
         showDashboard();
@@ -3320,7 +3456,7 @@
     });
     updateCurriculumText();
     if (qrInput.value.trim()) {
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=${encodeURIComponent(qrInput.value.trim())}`;
+      setQrCodeValue(qrInput.value.trim());
     }
 
     setTemplate(activeTemplate, { silent: true });
