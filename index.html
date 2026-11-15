@@ -1233,9 +1233,11 @@
     body.is-exporting .preview-stage,
     body.is-exporting .sheet-scaler { transition: none !important; }
 
-    /* Saat mengekspor lampiran, panel lampiran dipastikan ter-render. */
+    /* Saat mengekspor lampiran atau sertifikat, panel target dipastikan ter-render. */
     body.is-capturing #attachPanel { display: flex !important; }
     body.is-capturing #certPanel { display: none !important; }
+    body.is-capturing-cert #certPanel { display: flex !important; }
+    body.is-capturing-cert #attachPanel { display: none !important; }
     body.capture-offscreen .preview-area {
       display: flex !important;
       position: fixed !important;
@@ -1749,12 +1751,11 @@
         </svg>
         <span class="btn-label">Simpan</span>
       </button>
-      <button type="button" class="btn btn-paper" onclick="window.print()" title="Cetak / simpan PDF (Ctrl/Cmd + P)">
+      <button type="button" class="btn btn-paper" onclick="downloadCertificatePdf()" title="Unduh sertifikat PDF otomatis (Ctrl/Cmd + P)">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 9V4.5h10V9M7 17.5H5.5A1.5 1.5 0 0 1 4 16v-4.5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5V16a1.5 1.5 0 0 1-1.5 1.5H17"/>
-          <rect x="7" y="14" width="10" height="5.5" rx="0.5" stroke-width="1.8"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.5V15m0 0-4-4m4 4 4-4M5 19.5h14"/>
         </svg>
-        <span class="btn-label">Cetak</span>
+        <span class="btn-label">Unduh PDF</span>
       </button>
     </div>
   </header>
@@ -1973,12 +1974,11 @@
             </svg>
             Simpan Draft
           </button>
-          <button type="button" onclick="window.print()" class="btn btn-ink btn-block">
+          <button type="button" onclick="downloadCertificatePdf()" class="btn btn-ink btn-block">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 9V4.5h10V9M7 17.5H5.5A1.5 1.5 0 0 1 4 16v-4.5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5V16a1.5 1.5 0 0 1-1.5 1.5H17"/>
-              <rect x="7" y="14" width="10" height="5.5" rx="0.5" stroke-width="1.8"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.5V15m0 0-4-4m4 4 4-4M5 19.5h14"/>
             </svg>
-            Cetak PDF
+            Unduh PDF
           </button>
         </div>
         <div class="foot-grid">
@@ -2336,6 +2336,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
     const draftFieldIds = [
@@ -2966,6 +2967,81 @@
       }
     }
 
+    function getCertificatePdfFilename() {
+      const rawName = document.getElementById('in_recipient_name').value.trim();
+      const sanitized = rawName
+        .replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/^[.\s]+|[.\s]+$/g, '');
+      return `${sanitized || 'sertifikat'}.pdf`;
+    }
+
+    async function downloadCertificatePdf() {
+      if (typeof html2canvas !== 'function' || !window.jspdf?.jsPDF) {
+        showToast('Gagal memuat generator PDF. Periksa koneksi internet lalu coba lagi.', 'error');
+        return;
+      }
+
+      setBusy(true, 'Menyiapkan sertifikat PDF…');
+      await document.fonts.ready;
+
+      const previewArea = document.querySelector('.preview-area');
+      const certPanel = document.getElementById('certPanel');
+      const attachPanel = document.getElementById('attachPanel');
+      const wasCertHidden = certPanel.hidden;
+      const wasAttachHidden = attachPanel.hidden;
+      const needsOffscreen = previewArea.getClientRects().length === 0;
+
+      certPanel.hidden = false;
+      attachPanel.hidden = true;
+      if (needsOffscreen) document.body.classList.add('capture-offscreen');
+      document.body.classList.add('is-exporting', 'is-capturing-cert');
+
+      try {
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        const sheets = Array.from(document.querySelectorAll('#certStage .certificate-sheet'))
+          .filter(sheet => !sheet.hidden);
+        if (!sheets.length) {
+          throw new Error('Halaman sertifikat tidak ditemukan.');
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        for (let i = 0; i < sheets.length; i += 1) {
+          const canvas = await html2canvas(sheets[i], {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true,
+            width: 1080,
+            height: 764,
+            windowWidth: 1440
+          });
+          if (i > 0) pdf.addPage('a4', 'landscape');
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+        }
+
+        pdf.save(getCertificatePdfFilename());
+        showToast('Sertifikat PDF berhasil diunduh.');
+      } catch (error) {
+        showToast(`Gagal membuat PDF: ${error.message}`, 'error');
+      } finally {
+        document.body.classList.remove('is-exporting', 'is-capturing-cert', 'capture-offscreen');
+        certPanel.hidden = wasCertHidden;
+        attachPanel.hidden = wasAttachHidden;
+        setBusy(false);
+      }
+    }
+
     async function uploadAttachmentToMeQr() {
       const button = document.getElementById('uploadAttachmentButton');
       const status = document.getElementById('qrUploadStatus');
@@ -3214,6 +3290,9 @@
       if (event.key.toLowerCase() === 's') {
         event.preventDefault();
         saveDraft();
+      } else if (event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        downloadCertificatePdf();
       } else if (event.key.toLowerCase() === 'd' && event.shiftKey) {
         event.preventDefault();
         showDashboard();
