@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sertifikat Kemenkes RI - Live Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Merriweather & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Tipografi Utama Sertifikat Kemenkes */
+    .font-cert {
+      font-family: 'Merriweather', 'Times New Roman', Georgia, serif;
+    }
+    .font-ui {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Pola Wavy Guilloche Latar Belakang Khas Sertifikat */
+    .guilloche-bg {
+      background-color: #fdfaf2;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url("bg.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Dimensi Standar Kanvas Cetak A4 Landscape */
+    .certificate-sheet {
+      width: 1080px;
+      height: 764px;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+
+    .certificate-frame {
+      position: absolute;
+      inset: 1px;
+      border: 1px solid rgba(92, 75, 43, 0.65);
+      pointer-events: none;
+    }
+
+    .certificate-content {
+      position: absolute;
+      inset: 0;
+      text-align: center;
+    }
+
+    .certificate-heading {
+      position: absolute;
+      top: 11.1%;
+      left: 3%;
+      right: 3%;
+    }
+
+    .certificate-heading h1 {
+      display: inline-block;
+      border-bottom: 1.5px solid #111;
+      padding-bottom: 2px;
+      font-size: 28px;
+      font-weight: 400;
+      line-height: 1.15;
+    }
+
+    .certificate-heading p {
+      margin-top: 1px;
+      color: #222;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .certificate-details {
+      position: absolute;
+      top: 20.8%;
+      left: 3%;
+      right: 3%;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .certificate-details .detail-intro {
+      margin-bottom: 11px;
+      font-size: 17px;
+      line-height: 20px;
+    }
+
+    .certificate-details .recipient-name {
+      margin-bottom: 5px;
+      font-family: 'Merriweather', 'Times New Roman', Georgia, serif;
+      font-size: 34px;
+      font-weight: 400;
+      line-height: 38px;
+    }
+
+    .certificate-details .detail-following {
+      margin-bottom: 8px;
+      font-size: 17px;
+      line-height: 20px;
+    }
+
+    .certificate-details .course-name {
+      margin-bottom: 1px;
+      font-family: 'Merriweather', 'Times New Roman', Georgia, serif;
+      font-size: 31px;
+      font-weight: 400;
+      line-height: 38px;
+    }
+
+    .certificate-details .organizer {
+      margin-bottom: 14px;
+      font-family: 'Merriweather', 'Times New Roman', Georgia, serif;
+      font-size: 18px;
+      line-height: 22px;
+    }
+
+    .certificate-details .date {
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 22px;
+    }
+
+    .certificate-details .role {
+      margin-bottom: 16px;
+      font-size: 18px;
+      line-height: 22px;
+    }
+
+    .certificate-details .jpl {
+      font-size: 18px;
+      line-height: 22px;
+    }
+
+    .certificate-signature {
+      position: absolute;
+      top: 61.5%;
+      left: 32%;
+      width: 54%;
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      align-items: start;
+      gap: 18px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      text-align: center;
+    }
+
+    .certificate-qr {
+      display: inline-block;
+      padding: 2px;
+      background: #fff;
+    }
+
+    .certificate-qr img {
+      display: block;
+      width: 106px;
+      height: 106px;
+      object-fit: contain;
+    }
+
+    .certificate-signer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      color: #1f1f1f;
+      font-size: 17px;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .certificate-signer .signer-title-2 {
+      margin-top: 2px;
+    }
+
+    .certificate-signer .signature-mark {
+      width: 180px;
+      height: 80px;
+      margin-top: 5px;
+    }
+
+    .certificate-signer .signature-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+    }
+
+    .certificate-signer .signer-name {
+      margin-top: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+      padding: 0 8px 2px;
+      color: #080808;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .curriculum-sheet {
+      width: 600px;
+      height: 2620px;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      background: #fff;
+      color: #202b2b;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .curriculum-sheet::before,
+    .curriculum-sheet::after {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      background: #35aaa6;
+      content: '';
+    }
+
+    .curriculum-sheet::before {
+      left: 0;
+    }
+
+    .curriculum-sheet::after {
+      right: 0;
+    }
+
+    .curriculum-frame {
+      position: absolute;
+      inset: 18px 48px;
+      z-index: 1;
+      box-sizing: border-box;
+      border: 3px solid #45b7b2;
+      border-radius: 12px;
+      padding: 42px 90px 30px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .curriculum-heading {
+      text-align: center;
+    }
+
+    .curriculum-heading h2 {
+      margin: 0;
+      color: #19a8a3;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .curriculum-heading p {
+      margin: 2px 0 0;
+      color: #238f8b;
+      font-size: 27px;
+      line-height: 1.2;
+    }
+
+    .curriculum-heading .curriculum-number {
+      margin-top: 18px;
+      color: #737b7b;
+      font-size: 17px;
+    }
+
+    .curriculum-person {
+      margin-top: 48px;
+      font-size: 22px;
+    }
+
+    .curriculum-field-label {
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .curriculum-field-value {
+      margin-top: 3px;
+      font-size: 20px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .curriculum-name {
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .curriculum-field + .curriculum-field {
+      margin-top: 24px;
+    }
+
+    .curriculum-field.profession-field {
+      margin-top: 138px;
+    }
+
+    .curriculum-description {
+      margin-top: 24px;
+      font-size: 21px;
+      line-height: 1.55;
+    }
+
+    .curriculum-description p {
+      margin: 0;
+    }
+
+    .curriculum-description p + p {
+      margin-top: 5px;
+    }
+
+    .curriculum-modules {
+      margin-top: 150px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .curriculum-modules h3 {
+      margin: 0;
+      padding: 15px 14px;
+      background: #e4f8f3;
+      color: #263d3b;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .curriculum-modules ol {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+      margin: 24px 0 0;
+      padding: 0 8px;
+      list-style: none;
+    }
+
+    .curriculum-modules li {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .dashboard-view {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+      padding: clamp(16px, 3vw, 40px);
+      background: #f1f5f9;
+    }
+
+    body.dashboard-active > #editorSidebar,
+    body.dashboard-active > .preview-area {
+      display: none;
+    }
+
+    body.dashboard-active > #dashboardView {
+      display: block;
+    }
+
+    .dashboard-shell {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .dashboard-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #cbd5e1;
+    }
+
+    .dashboard-header h1 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .dashboard-header p {
+      margin: 6px 0 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .dashboard-summary {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 22px 0;
+      color: #334155;
+    }
+
+    .dashboard-summary strong {
+      color: #0f766e;
+      font-size: 28px;
+    }
+
+    .draft-table-wrap {
+      overflow-x: auto;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      background: #fff;
+    }
+
+    .draft-table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .draft-table th,
+    .draft-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    .draft-table th {
+      color: #475569;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .draft-table td {
+      color: #1e293b;
+      font-size: 14px;
+    }
+
+    .draft-actions {
+      display: flex;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .draft-empty {
+      padding: 36px 16px;
+      color: #64748b;
+      text-align: center;
+    }
+
+    .draft-status {
+      min-height: 18px;
+      margin-top: 8px;
+      color: #0f766e;
+      font-size: 11px;
+    }
+
+    @media (max-width: 640px) {
+      .dashboard-header {
+        flex-direction: column;
+      }
+    }
+
+    /* Mode Cetak Bersih Khusus Sertifikat */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .preview-area {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        width: 100vw !important;
+        height: 100vh !important;
+      }
+      .certificate-sheet {
+        width: 100vw !important;
+        height: 100vh !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        page-break-after: always;
+        transform: none !important;
+      }
+      .curriculum-sheet {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 font-ui text-slate-800 min-h-screen flex flex-col xl:flex-row">
+
+  <!-- ================= FORM EDITOR SIDEBAR ================= -->
+  <aside id="editorSidebar" class="no-print w-full xl:w-[410px] bg-white border-r border-slate-200 flex flex-col h-auto xl:h-screen shadow-lg z-20">
+    <!-- Header Form -->
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+      <div>
+        <h2 class="font-bold text-base tracking-wide flex items-center gap-2">
+          <svg class="w-5 h-5 text-teal-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"/>
+            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+          </svg>
+          Editor Sertifikat
+        </h2>
+        <p class="text-xs text-slate-300 mt-0.5">Ubah data untuk pembaruan real-time</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="showDashboard()" class="px-3 py-1.5 border border-slate-500 hover:bg-slate-800 text-white text-xs font-semibold rounded transition">Draft</button>
+        <button onclick="window.print()" class="px-3.5 py-1.5 bg-teal-500 hover:bg-teal-600 text-white text-xs font-semibold rounded shadow flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Cetak
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable Input Form -->
+    <div class="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+      
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Judul Program Atas</label>
+        <input type="text" id="in_title" value="Pengembangan Keprofesian Berkelanjutan" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Nomor Sertifikat</label>
+        <input type="text" id="in_cert_no" value="KT.03.02/F/7413026/SER/2026" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div class="border-t border-slate-200 pt-3">
+        <label class="block font-semibold text-slate-700 mb-1">Nama Penerima Sertifikat</label>
+        <input type="text" id="in_recipient_name" value="BOBI MAHENDRA" class="w-full px-3 py-2 font-bold text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">NIK</label>
+          <input type="text" id="in_nik" value="3215071007030002" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Profesi</label>
+          <input type="text" id="in_profession" value="Ners" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Nama Pelatihan</label>
+        <textarea id="in_course_name" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">Pelatihan Basic Trauma Cardiac Life Support (BTCLS)</textarea>
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Penyelenggara</label>
+        <input type="text" id="in_organizer" value="MEDS INDONESIA" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Jadwal / Periode Tanggal</label>
+        <input type="text" id="in_date" value="Pada 12-10-2026 s/d 17-10-2026" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Peran Peserta</label>
+          <input type="text" id="in_role" value="Sebagai Peserta" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Keterangan JPL & SKP</label>
+          <input type="text" id="in_jpl" value="Jumlah 55 Jam Pelajaran Senilai 15 SKP" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="border-t border-slate-200 pt-3">
+        <label class="block font-semibold text-slate-700 mb-1">Teks Atas Penandatangan</label>
+        <input type="text" id="in_signer_title_1" value="a.n Menteri Kesehatan" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Jabatan Penandatangan</label>
+        <input type="text" id="in_signer_title_2" value="Direktur Jenderal Sumber Daya Manusia Kesehatan" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div>
+        <label class="block font-semibold text-slate-700 mb-1">Nama Pejabat Penandatangan</label>
+        <input type="text" id="in_signer_name" value="dr. YULI FARIANTI, M.Epid" class="w-full px-3 py-2 font-bold border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+      </div>
+
+      <div class="border-t border-slate-200 pt-3">
+        <label class="block font-semibold text-slate-700 mb-1">URL QR (otomatis dari ME-QR setelah upload)</label>
+        <input type="text" id="in_qr_data" value="https://kemkes.go.id/verifikasi/KT.03.02/F/7413026/SER/2026" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-teal-500 focus:outline-none">
+        <button id="uploadAttachmentButton" type="button" onclick="uploadAttachmentToMeQr()" class="w-full mt-2 py-2 px-3 bg-teal-700 text-white hover:bg-teal-800 rounded font-semibold text-xs transition">
+          Upload Lampiran ke ME-QR
+        </button>
+        <p id="qrUploadStatus" class="draft-status" role="status" aria-live="polite"></p>
+      </div>
+
+    </div>
+
+    <!-- Footer Tombol Reset & Export -->
+    <div class="p-4 bg-slate-50 border-t border-slate-200">
+      <div class="flex gap-2">
+        <button onclick="resetToDefault()" class="w-1/2 py-2 px-3 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded font-semibold text-xs transition">
+          Reset Standar
+        </button>
+        <button onclick="window.print()" class="w-1/2 py-2 px-3 bg-slate-900 text-white hover:bg-black rounded font-semibold text-xs transition flex items-center justify-center gap-1">
+          <span>Cetak PDF</span>
+        </button>
+      </div>
+      <button onclick="downloadCurriculumImage()" class="w-full mt-2 py-2 px-3 bg-teal-600 text-white hover:bg-teal-700 rounded font-semibold text-xs transition">
+        Unduh Lampiran PNG
+      </button>
+      <button id="saveDraftButton" onclick="saveDraft()" class="w-full mt-2 py-2 px-3 bg-emerald-700 text-white hover:bg-emerald-800 rounded font-semibold text-xs transition">
+        Simpan Draft
+      </button>
+      <p id="draftSaveStatus" class="draft-status" role="status" aria-live="polite"></p>
+    </div>
+  </aside>
+
+  <!-- ================= PREVIEW AREA ================= -->
+  <main class="preview-area flex-1 overflow-auto bg-slate-200/80 p-4 md:p-8 flex flex-col items-center justify-start gap-8 min-h-[780px]">
+    
+    <!-- Canvas Sertifikat (A4 Landscape Standar) -->
+    <div class="certificate-sheet guilloche-bg font-cert select-none">
+      
+      <div class="certificate-frame"></div>
+
+      <!-- KONTEN SERTIFIKAT -->
+      <div class="certificate-content z-10">
+
+        <!-- 1. HEADER LOGO KEMENKES & JUDUL -->
+        <div class="certificate-heading">
+          <!-- Judul Sertifikat (Pengembangan Keprofesian Berkelanjutan) -->
+          <h1 id="out_title">Pengembangan Keprofesian Berkelanjutan</h1>
+
+          <!-- Nomor Sertifikat -->
+          <p>
+            Nomor: <span id="out_cert_no">KT.03.02/F/7413026/SER/2026</span>
+          </p>
+        </div>
+
+        <!-- 2. BODY / DATA PENERIMA & PELATIHAN -->
+        <div class="certificate-details">
+          <p class="detail-intro text-[#2a2a2a]">
+            Diberikan kepada
+          </p>
+
+          <!-- NAMA PENERIMA -->
+          <h2 id="out_recipient_name" class="recipient-name text-[#0c0c0c] uppercase">
+            BOBI MAHENDRA
+          </h2>
+
+          <p class="detail-following text-[#2a2a2a]">
+            Telah mengikuti
+          </p>
+
+          <!-- JUDUL PELATIHAN -->
+          <h3 id="out_course_name" class="course-name text-[#0f0f0f]">
+            Pelatihan Basic Trauma Cardiac Life Support (BTCLS)
+          </h3>
+
+          <!-- PENYELENGGARA -->
+          <p class="organizer text-[#2a2a2a]">
+            diselenggarakan oleh <span id="out_organizer" class="font-semibold text-black">MEDS INDONESIA</span>
+          </p>
+
+          <!-- TANGGAL PELAKSANAAN -->
+          <p class="date text-black">
+            <span id="out_date">Pada 12-10-2026 s/d 17-10-2026</span>
+          </p>
+
+          <!-- PERAN -->
+          <p id="out_role" class="role text-[#1a1a1a]">
+            Sebagai Peserta
+          </p>
+
+          <!-- JPL & SKP -->
+          <p id="out_jpl" class="jpl text-[#1a1a1a]">
+            Jumlah 55 Jam Pelajaran Senilai 15 SKP
+          </p>
+        </div>
+
+        <!-- 3. FOOTER: QR CODE & PEJABAT PENANDATANGAN -->
+        <div class="certificate-signature">
+          
+          <!-- Sisi Kiri: Kotak QR Code -->
+          <div>
+            <div class="certificate-qr">
+              <img 
+                id="out_qr_img"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=https://kemkes.go.id/verifikasi/KT.03.02/F/7413026/SER/2026" 
+                alt="QR Code Sertifikat"
+              />
+            </div>
+          </div>
+
+          <!-- Sisi Kanan: Penandatangan Kementerian Kesehatan -->
+          <div class="certificate-signer">
+            <p id="out_signer_title_1">
+              a.n Menteri Kesehatan
+            </p>
+            <p id="out_signer_title_2" class="signer-title-2">
+              Direktur Jenderal Sumber Daya Manusia Kesehatan
+            </p>
+
+            <!-- Tanda tangan -->
+            <div class="signature-mark flex items-center justify-center">
+              <img src="ttd.png" alt="Tanda tangan" class="signature-image">
+            </div>
+
+            <!-- Nama Pejabat Tertera -->
+            <p id="out_signer_name" class="signer-name">
+              dr. YULI FARIANTI, M.Epid
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <section id="curriculum_sheet" class="curriculum-sheet" aria-label="Lampiran daftar mata pembelajaran">
+      <div class="curriculum-frame">
+        <header class="curriculum-heading">
+          <h2>SERTIFIKAT</h2>
+          <p>Pelatihan</p>
+          <p id="out_curriculum_cert_no" class="curriculum-number">KT.03.02/F/7413026/SER/2026</p>
+        </header>
+
+        <section class="curriculum-person">
+          <div class="curriculum-field">
+            <div class="curriculum-field-label">Diberikan kepada:</div>
+          </div>
+          <div class="curriculum-field">
+            <div class="curriculum-field-label">Nama</div>
+            <div id="out_curriculum_name" class="curriculum-field-value curriculum-name">BOBI MAHENDRA</div>
+          </div>
+          <div class="curriculum-field">
+            <div class="curriculum-field-label">NIK</div>
+            <div id="out_curriculum_nik" class="curriculum-field-value">3215071007030002</div>
+          </div>
+          <div class="curriculum-field profession-field">
+            <div class="curriculum-field-label">Profesi</div>
+            <div id="out_curriculum_profession" class="curriculum-field-value">Ners</div>
+          </div>
+        </section>
+
+        <section class="curriculum-description">
+          <p>Telah mengikuti</p>
+          <p><strong id="out_curriculum_course">Pelatihan Basic Trauma Cardiac Life Support (BTCLS)</strong> <span id="out_curriculum_role">sebagai Peserta</span> yang diselenggarakan oleh <span id="out_curriculum_organizer">MEDS INDONESIA</span> <span id="out_curriculum_date">tanggal 12 Oktober 2026 s/d 17 Oktober 2026</span> dengan <span id="out_curriculum_jpl">jumlah 55 jam pelajaran senilai 15 Satuan Kredit Profesi (SKP)</span>.</p>
+        </section>
+
+        <section class="curriculum-modules">
+          <h3>Daftar Mata Pembelajaran:</h3>
+          <ol>
+            <li>Bantuan hidup dasar</li>
+            <li>Etik dan Aspek Legal Keperawatan Gawat Darurat</li>
+            <li>BLC</li>
+            <li>Anti Korupsi</li>
+            <li>Sistem Penanggulangan Gawat Darurat Terpadu (SPGDT)</li>
+            <li>Triage pasien</li>
+            <li>Penilaian dan penatalaksanaan awal (initial assessment)</li>
+            <li>Penatalaksanaan pasien dengan gangguan jalan napas dan pernapasan (airway and breathing)</li>
+            <li>Penatalaksanaan pasien akibat trauma kepala dan spinal, thorak dan abdomen, musculoskeletal dan luka bakar.</li>
+            <li>Penatalaksanaan pasien dengan gangguan sirkulasi</li>
+            <li>Penatalaksanaan kegawatdaruratan kardiovaskuler</li>
+            <li>Evaluasi dan Transportasi</li>
+          </ol>
+        </section>
+      </div>
+    </section>
+
+  </main>
+
+  <section id="dashboardView" class="dashboard-view" aria-label="Dashboard draft sertifikat">
+    <div class="dashboard-shell">
+      <header class="dashboard-header">
+        <div>
+          <h1>Draft Sertifikat</h1>
+          <p>Kelola dan lanjutkan data sertifikat yang tersimpan di perangkat ini.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="showEditor()" class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-white rounded font-semibold text-sm">Kembali ke Editor</button>
+          <button onclick="createNewDraft()" class="px-4 py-2 bg-teal-700 text-white hover:bg-teal-800 rounded font-semibold text-sm">Draft Baru</button>
+        </div>
+      </header>
+      <div class="dashboard-summary">
+        <strong id="draftCount">0</strong>
+        <span>draft tersimpan</span>
+      </div>
+      <div class="draft-table-wrap">
+        <table class="draft-table">
+          <thead>
+            <tr>
+              <th>Nama Peserta</th>
+              <th>Nomor Sertifikat</th>
+              <th>Terakhir Diubah</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="draftList"></tbody>
+        </table>
+        <div id="draftEmpty" class="draft-empty" hidden>Belum ada draft. Pilih “Draft Baru” untuk memulai.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Script Realtime Data-Binding -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    const draftFieldIds = [
+      'in_title', 'in_cert_no', 'in_recipient_name', 'in_nik', 'in_profession',
+      'in_course_name', 'in_organizer', 'in_date', 'in_role', 'in_jpl',
+      'in_signer_title_1', 'in_signer_title_2', 'in_signer_name', 'in_qr_data'
+    ];
+    let draftDb = null;
+    let draftStorage = null;
+    let currentDraftId = null;
+    const databaseReady = initializeDraftDatabase();
+
+    function openDraftStorage() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('sertifikat-draft-storage', 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('database');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function readStoredDatabase() {
+      return new Promise((resolve, reject) => {
+        const transaction = draftStorage.transaction('database', 'readonly');
+        const request = transaction.objectStore('database').get('sqlite');
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function persistDatabase() {
+      return new Promise((resolve, reject) => {
+        const transaction = draftStorage.transaction('database', 'readwrite');
+        transaction.objectStore('database').put(draftDb.export(), 'sqlite');
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error);
+      });
+    }
+
+    async function initializeDraftDatabase() {
+      try {
+        const SQL = await initSqlJs({
+          locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/${filename}`
+        });
+        draftStorage = await openDraftStorage();
+        const storedDatabase = await readStoredDatabase();
+        draftDb = storedDatabase ? new SQL.Database(storedDatabase) : new SQL.Database();
+        draftDb.run(`CREATE TABLE IF NOT EXISTS drafts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          recipient_name TEXT NOT NULL,
+          certificate_number TEXT NOT NULL,
+          data_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )`);
+        await persistDatabase();
+        renderDraftList();
+        document.getElementById('saveDraftButton').disabled = false;
+        setDraftStatus('SQLite siap. Draft tersimpan di browser ini.');
+        return true;
+      } catch (error) {
+        console.error('Gagal menginisialisasi SQLite:', error);
+        const button = document.getElementById('saveDraftButton');
+        button.disabled = true;
+        setDraftStatus('SQLite tidak tersedia. Periksa koneksi internet atau dukungan penyimpanan browser.', true);
+        return false;
+      }
+    }
+
+    const fields = [
+      { input: 'in_title', output: 'out_title' },
+      { input: 'in_cert_no', output: 'out_cert_no' },
+      { input: 'in_cert_no', output: 'out_curriculum_cert_no' },
+      { input: 'in_recipient_name', output: 'out_recipient_name' },
+      { input: 'in_recipient_name', output: 'out_curriculum_name' },
+      { input: 'in_nik', output: 'out_curriculum_nik' },
+      { input: 'in_profession', output: 'out_curriculum_profession' },
+      { input: 'in_course_name', output: 'out_course_name' },
+      { input: 'in_course_name', output: 'out_curriculum_course' },
+      { input: 'in_organizer', output: 'out_organizer' },
+      { input: 'in_organizer', output: 'out_curriculum_organizer' },
+      { input: 'in_date', output: 'out_date' },
+      { input: 'in_role', output: 'out_role' },
+      { input: 'in_role', output: 'out_curriculum_role' },
+      { input: 'in_jpl', output: 'out_jpl' },
+      { input: 'in_signer_title_1', output: 'out_signer_title_1' },
+      { input: 'in_signer_title_2', output: 'out_signer_title_2' },
+      { input: 'in_signer_name', output: 'out_signer_name' }
+    ];
+
+    // Hubungkan setiap input form langsung ke teks di sertifikat
+    fields.forEach(field => {
+      const elInput = document.getElementById(field.input);
+      const elOutput = document.getElementById(field.output);
+      
+      if (elInput && elOutput) {
+        elInput.addEventListener('input', () => {
+          elOutput.textContent = elInput.value;
+        });
+      }
+    });
+
+    function updateCurriculumText() {
+      const dateValue = document.getElementById('in_date').value.trim().replace(/^Pada\s+/i, '');
+      const dateParts = dateValue.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})\s*s\/d\s*(\d{1,2})[-/](\d{1,2})[-/](\d{4})/i);
+      const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      let formattedDate = dateValue ? `tanggal ${dateValue}` : '';
+
+      if (dateParts) {
+        formattedDate = `tanggal ${dateParts[1]} ${months[Number(dateParts[2]) - 1] || dateParts[2]} ${dateParts[3]} s/d ${dateParts[4]} ${months[Number(dateParts[5]) - 1] || dateParts[5]} ${dateParts[6]}`;
+      }
+
+      const role = document.getElementById('in_role').value.trim();
+      const jpl = document.getElementById('in_jpl').value.trim();
+      const jplParts = jpl.match(/(\d+)\s*Jam Pelajaran.*?(\d+)\s*SKP/i);
+      const formattedJpl = jplParts
+        ? `jumlah ${jplParts[1]} jam pelajaran senilai ${jplParts[2]} Satuan Kredit Profesi (SKP)`
+        : jpl.charAt(0).toLowerCase() + jpl.slice(1);
+
+      document.getElementById('out_curriculum_date').textContent = formattedDate;
+      document.getElementById('out_curriculum_role').textContent = role.charAt(0).toLowerCase() + role.slice(1);
+      document.getElementById('out_curriculum_jpl').textContent = formattedJpl;
+    }
+
+    function setDraftStatus(message, isError = false) {
+      const status = document.getElementById('draftSaveStatus');
+      status.textContent = message;
+      status.style.color = isError ? '#b91c1c' : '#0f766e';
+    }
+
+    function getDraftFormData() {
+      return Object.fromEntries(draftFieldIds.map(id => [id, document.getElementById(id).value]));
+    }
+
+    async function saveDraft() {
+      if (!await databaseReady || !draftDb) {
+        setDraftStatus('SQLite belum siap. Draft belum disimpan.', true);
+        return;
+      }
+
+      const button = document.getElementById('saveDraftButton');
+      button.disabled = true;
+      try {
+        const data = getDraftFormData();
+        const now = new Date().toISOString();
+        if (currentDraftId === null) {
+          draftDb.run(
+            'INSERT INTO drafts (recipient_name, certificate_number, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+            [data.in_recipient_name.trim() || 'Tanpa nama', data.in_cert_no.trim(), JSON.stringify(data), now, now]
+          );
+          currentDraftId = draftDb.exec('SELECT last_insert_rowid()')[0].values[0][0];
+        } else {
+          draftDb.run(
+            'UPDATE drafts SET recipient_name = ?, certificate_number = ?, data_json = ?, updated_at = ? WHERE id = ?',
+            [data.in_recipient_name.trim() || 'Tanpa nama', data.in_cert_no.trim(), JSON.stringify(data), now, currentDraftId]
+          );
+        }
+        await persistDatabase();
+        renderDraftList();
+        setDraftStatus(`Draft tersimpan ${new Date(now).toLocaleString('id-ID')}.`);
+      } catch (error) {
+        console.error('Gagal menyimpan draft:', error);
+        setDraftStatus(`Gagal menyimpan draft: ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function renderDraftList() {
+      const list = document.getElementById('draftList');
+      if (!list || !draftDb) return;
+
+      list.replaceChildren();
+      const result = draftDb.exec('SELECT id, recipient_name, certificate_number, updated_at FROM drafts ORDER BY updated_at DESC');
+      const rows = result.length ? result[0].values : [];
+      document.getElementById('draftCount').textContent = rows.length;
+      document.getElementById('draftEmpty').hidden = rows.length > 0;
+
+      rows.forEach(([id, name, certificateNumber, updatedAt]) => {
+        const row = document.createElement('tr');
+        [name, certificateNumber, new Date(updatedAt).toLocaleString('id-ID')].forEach(value => {
+          const cell = document.createElement('td');
+          cell.textContent = value || '-';
+          row.appendChild(cell);
+        });
+
+        const actions = document.createElement('td');
+        const actionGroup = document.createElement('div');
+        actionGroup.className = 'draft-actions';
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'px-3 py-1.5 bg-teal-700 text-white hover:bg-teal-800 rounded text-xs font-semibold';
+        editButton.textContent = 'Edit';
+        editButton.addEventListener('click', () => editDraft(Number(id)));
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded text-xs font-semibold';
+        deleteButton.textContent = 'Hapus';
+        deleteButton.addEventListener('click', () => deleteDraft(Number(id)));
+        actionGroup.append(editButton, deleteButton);
+        actions.appendChild(actionGroup);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
+    async function editDraft(draftId) {
+      if (!await databaseReady || !draftDb) return;
+      const result = draftDb.exec(`SELECT data_json FROM drafts WHERE id = ${Number(draftId)}`);
+      if (!result.length || !result[0].values.length) return;
+
+      const data = JSON.parse(result[0].values[0][0]);
+      currentDraftId = Number(draftId);
+      draftFieldIds.forEach(id => {
+        const input = document.getElementById(id);
+        input.value = data[id] ?? '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      showEditor();
+      setDraftStatus(`Mengedit draft: ${data.in_recipient_name || 'Tanpa nama'}`);
+    }
+
+    async function deleteDraft(draftId) {
+      if (!await databaseReady || !draftDb || !confirm('Hapus draft ini?')) return;
+      draftDb.run('DELETE FROM drafts WHERE id = ?', [Number(draftId)]);
+      await persistDatabase();
+      if (currentDraftId === Number(draftId)) currentDraftId = null;
+      renderDraftList();
+    }
+
+    async function showDashboard() {
+      if (!await databaseReady) return;
+      if (currentDraftId !== null) await saveDraft();
+      renderDraftList();
+      document.body.classList.add('dashboard-active');
+    }
+
+    function showEditor() {
+      document.body.classList.remove('dashboard-active');
+    }
+
+    function createNewDraft() {
+      currentDraftId = null;
+      resetToDefault();
+      showEditor();
+      setDraftStatus('Draft baru. Simpan untuk menambahkannya ke daftar.');
+    }
+
+    ['in_date', 'in_role', 'in_jpl'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateCurriculumText);
+    });
+    updateCurriculumText();
+
+    async function createCurriculumCanvas() {
+      if (typeof html2canvas !== 'function') {
+        throw new Error('Gagal memuat generator PNG. Periksa koneksi internet lalu coba lagi.');
+      }
+
+      await document.fonts.ready;
+      const sheet = document.getElementById('curriculum_sheet');
+      return html2canvas(sheet, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true
+      });
+    }
+
+    function getCurriculumFilename() {
+      const filename = document.getElementById('in_recipient_name').value.trim()
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '') || 'peserta';
+      return `lampiran-${filename}.png`;
+    }
+
+    async function downloadCurriculumImage() {
+      try {
+        const canvas = await createCurriculumCanvas();
+        const link = document.createElement('a');
+        link.download = getCurriculumFilename();
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        alert(`Gagal membuat gambar: ${error.message}`);
+      }
+    }
+
+    async function uploadAttachmentToMeQr() {
+      const button = document.getElementById('uploadAttachmentButton');
+      const status = document.getElementById('qrUploadStatus');
+      button.disabled = true;
+      status.textContent = 'Membuat dan mengunggah lampiran...';
+      status.style.color = '#0f766e';
+
+      try {
+        const canvas = await createCurriculumCanvas();
+        const apiEndpoint = window.location.port === '4173'
+          ? '/api/qr/file'
+          : 'http://127.0.0.1:4173/api/qr/file';
+        const response = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: getCurriculumFilename(),
+            file: canvas.toDataURL('image/png')
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          const errorMessage = [result.error, result.details].filter(Boolean).join(' | ');
+          throw new Error(errorMessage || 'ME-QR gagal membuat QR untuk lampiran.');
+        }
+
+        qrInput.value = result.url;
+        qrImg.src = result.qrImageUrl;
+        status.textContent = 'Lampiran diunggah. QR kini membuka lampiran yang dihosting ME-QR.';
+      } catch (error) {
+        status.textContent = error.message;
+        status.style.color = '#b91c1c';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    // Penanganan pembaruan QR Code dinamis untuk URL yang diedit manual
+    const qrInput = document.getElementById('in_qr_data');
+    const qrImg = document.getElementById('out_qr_img');
+    
+    let qrTimer = null;
+    qrInput.addEventListener('input', () => {
+      clearTimeout(qrTimer);
+      qrTimer = setTimeout(() => {
+        const encoded = encodeURIComponent(qrInput.value.trim());
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=115x115&data=${encoded}`;
+      }, 400);
+    });
+
+    // Reset formulir kembali ke data default persis gambar
+    function resetToDefault() {
+      const defaults = {
+        in_title: 'Pengembangan Keprofesian Berkelanjutan',
+        in_cert_no: 'KT.03.02/F/7413026/SER/2026',
+        in_recipient_name: 'BOBI MAHENDRA',
+        in_nik: '3215071007030002',
+        in_profession: 'Ners',
+        in_course_name: 'Pelatihan Basic Trauma Cardiac Life Support (BTCLS)',
+        in_organizer: 'MEDS INDONESIA',
+        in_date: 'Pada 12-10-2026 s/d 17-10-2026',
+        in_role: 'Sebagai Peserta',
+        in_jpl: 'Jumlah 55 Jam Pelajaran Senilai 15 SKP',
+        in_signer_title_1: 'a.n Menteri Kesehatan',
+        in_signer_title_2: 'Direktur Jenderal Sumber Daya Manusia Kesehatan',
+        in_signer_name: 'dr. YULI FARIANTI, M.Epid',
+        in_qr_data: 'https://kemkes.go.id/verifikasi/KT.03.02/F/7413026/SER/2026'
+      };
+
+      for (let id in defaults) {
+        const input = document.getElementById(id);
+        if (input) {
+          input.value = defaults[id];
+          input.dispatchEvent(new Event('input'));
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>
